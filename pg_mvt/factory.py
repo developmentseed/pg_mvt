@@ -33,11 +33,6 @@ except ImportError:
 templates = Jinja2Templates(directory=str(resources_files(__package__) / "templates"))  # type: ignore
 
 
-TILE_RESPONSE_PARAMS: Dict[str, Any] = {
-    "media_type": "application/x-protobuf",
-}
-
-
 def queryparams_to_kwargs(q: QueryParams, ignore_keys: List = []) -> Dict:
     """Convert query params to dict."""
     keys = list(q.keys())
@@ -108,7 +103,7 @@ class TilerEndpoints(Controller):
 
     dependencies = {
         "layer": Provide(LayerParams),
-        # "tms": Provide(TileMatrixSetParams),
+        "tms": Provide(TileMatrixSetParams),
     }
 
     @get(
@@ -124,14 +119,11 @@ class TilerEndpoints(Controller):
     async def tile(
         self,
         request: Request,
+        tms: TileMatrixSet,
         layer: Layer,
         tile: Tile,
-        # tms: TileMatrixSet,
     ) -> bytes:
         """Return vector tile."""
-        # TODO: https://github.com/starlite-api/starlite/issues/40
-        tms = TileMatrixSetParams("WebMercatorQuad")
-
         pool = request.app.state.pool
 
         kwargs = queryparams_to_kwargs(
@@ -146,8 +138,8 @@ class TilerEndpoints(Controller):
     async def tilejson(
         self,
         request: Request,
+        tms: TileMatrixSet,
         layer: Layer,
-        # tms: TileMatrixSet,
         minzoom: Optional[int] = Parameter(
             required=False, description="Overwrite default minzoom."
         ),
@@ -156,9 +148,6 @@ class TilerEndpoints(Controller):
         ),
     ) -> TileJSON:
         """Return TileJSON document."""
-        # TODO: https://github.com/starlite-api/starlite/issues/40
-        tms = TileMatrixSetParams("WebMercatorQuad")
-
         path_params: Dict[str, Any] = {
             # "TileMatrixSetId": tms.identifier,
             "layer": layer.id,
@@ -168,7 +157,8 @@ class TilerEndpoints(Controller):
         }
         tile_endpoint = self.url_for(request, "tile", **path_params)
 
-        qs_key_to_remove = ["tilematrixsetid", "minzoom", "maxzoom"]
+        # qs_key_to_remove = ["tilematrixsetid", "minzoom", "maxzoom"]
+        qs_key_to_remove = ["minzoom", "maxzoom"]
         query_params = [
             (key, value)
             for (key, value) in request.query_params._list
@@ -274,12 +264,10 @@ class TilerEndpoints(Controller):
 # # Table/Function dependency
 # layer_dependency: Callable[..., Layer] = LayerParams
 
-# with_tables_metadata: bool = False
-# with_functions_metadata: bool = False
-# with_viewer: bool = False
+
 def VectorTilerFactory(prefix: str = "") -> Type[TilerEndpoints]:
     """Edit TilerEndpoints class."""
-    return type(  # type: ignore
+    return type(
         "TilerEndpoints",
         (TilerEndpoints,),
         {
@@ -329,7 +317,7 @@ class TMSEndpoints(Controller):
             }
         )
 
-    # can't use openapi with TileMatrixSet
+    # TODO: can't use openapi with TileMatrixSet
     @get(path="/tileMatrixSets/{TileMatrixSetId:str}")
     def TileMatrixSet_info(self, tms: TileMatrixSet) -> Dict:
         """Return TileMatrixSet JSON document."""
@@ -340,7 +328,7 @@ class TMSEndpoints(Controller):
 
 def TMSFactory(prefix: str = "") -> Type[TMSEndpoints]:
     """Edit TMSEndpoints class."""
-    return type(  # type: ignore
+    return type(
         "TMSEndpoints",
         (TMSEndpoints,),
         {
