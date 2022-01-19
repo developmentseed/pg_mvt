@@ -1,7 +1,7 @@
 """pg_mvt.factory: router factories."""
 
 import json
-from typing import Any, Dict, List, Optional, Tuple, Type
+from typing import Any, Callable, Dict, List, Optional, Tuple, Type
 from urllib.parse import urlencode
 
 from morecantile import Tile, TileMatrixSet
@@ -105,6 +105,26 @@ class TilerEndpoints(Controller):
         "layer": Provide(LayerParams),
         "tms": Provide(TileMatrixSetParams),
     }
+
+    @classmethod
+    def factory(
+        cls,
+        prefix: str = "",
+        tms_dependency: Callable = None,
+        layer_dependency: Callable = None,
+    ) -> Type["TilerEndpoints"]:
+        """Edit TilerEndpoints class."""
+        new_deps = {}
+        if tms_dependency:
+            new_deps["tms"] = Provide(tms_dependency)
+        if layer_dependency:
+            new_deps["layer"] = Provide(layer_dependency)
+
+        return type(
+            "TilerEndpoints",
+            (cls,),
+            {"path": prefix, "dependencies": {**cls.dependencies, **new_deps}},
+        )
 
     @get(
         path="/tiles/{layer:str}/{z:int}/{x:int}/{y:int}.pbf",
@@ -258,24 +278,6 @@ class TilerEndpoints(Controller):
         )
 
 
-# # TileMatrixSet dependency
-# tms_dependency: Callable[..., TileMatrixSet] = TileMatrixSetParams
-
-# # Table/Function dependency
-# layer_dependency: Callable[..., Layer] = LayerParams
-
-
-def VectorTilerFactory(prefix: str = "") -> Type[TilerEndpoints]:
-    """Edit TilerEndpoints class."""
-    return type(
-        "TilerEndpoints",
-        (TilerEndpoints,),
-        {
-            "path": prefix,
-        },
-    )
-
-
 class TMSEndpoints(Controller):
     """TileMatrixSets endpoints."""
 
@@ -286,6 +288,28 @@ class TMSEndpoints(Controller):
     }
 
     supported_tms: Type[TileMatrixSetNames] = TileMatrixSetNames
+
+    @classmethod
+    def factory(
+        cls,
+        prefix: str = "",
+        tms_dependency: Callable = None,
+        supported_tms: Type[TileMatrixSetNames] = None,
+    ) -> Type["TMSEndpoints"]:
+        """Edit TMSEndpoints class."""
+        new_deps = {}
+        if tms_dependency:
+            new_deps["tms"] = Provide(tms_dependency)
+
+        return type(
+            "TMSEndpoints",
+            (cls,),
+            {
+                "path": prefix,
+                "dependencies": {**TMSEndpoints.dependencies, **new_deps},
+                "supported_tms": supported_tms or TMSEndpoints.supported_tms,
+            },
+        )
 
     @get(path="/tileMatrixSets")
     def TileMatrixSet_list(self, request: Request) -> TileMatrixSetList:
@@ -324,14 +348,3 @@ class TMSEndpoints(Controller):
         # TODO: returning Dict is not enough because there are models within the model
         # we will need to iterate through all items
         return json.loads(tms.json(exclude_none=True))
-
-
-def TMSFactory(prefix: str = "") -> Type[TMSEndpoints]:
-    """Edit TMSEndpoints class."""
-    return type(
-        "TMSEndpoints",
-        (TMSEndpoints,),
-        {
-            "path": prefix,
-        },
-    )

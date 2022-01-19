@@ -3,7 +3,7 @@
 from typing import Dict
 
 from pg_mvt.db import close_db_connection, connect_to_db
-from pg_mvt.factory import TMSFactory, VectorTilerFactory
+from pg_mvt.factory import TilerEndpoints, TMSEndpoints
 from pg_mvt.middleware import CacheControlMiddleware
 from pg_mvt.settings import APISettings
 from pg_mvt.version import __version__ as pg_mvt_version
@@ -23,9 +23,6 @@ except ImportError:
 settings = APISettings()
 
 templates = Jinja2Templates(directory=str(resources_files(__package__) / "templates"))  # type: ignore
-
-mvt_endpoints = VectorTilerFactory()
-tms_endpoints = TMSFactory()
 
 
 @get(path="/", media_type=MediaType.HTML, include_in_schema=False)
@@ -48,8 +45,8 @@ app = Starlite(
     route_handlers=[
         index,
         ping,
-        mvt_endpoints,
-        tms_endpoints,
+        TilerEndpoints,
+        TMSEndpoints,
     ],
     middleware=[
         Middleware(

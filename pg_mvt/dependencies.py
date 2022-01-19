@@ -17,7 +17,7 @@ TileMatrixSetNames = Enum(  # type: ignore
 
 def TileMatrixSetParams(
     TileMatrixSetId: str = Parameter(
-        default="WebMercatorQuad",  # type: ignore
+        default=TileMatrixSetNames.WebMercatorQuad.name,  # type: ignore
         description="TileMatrixSet Name (default: 'WebMercatorQuad')",
     ),
 ) -> TileMatrixSet:
