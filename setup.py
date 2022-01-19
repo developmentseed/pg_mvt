@@ -10,6 +10,7 @@ inst_reqs = [
     "buildpg>=0.3",
     "starlite>=0.5",
     "jinja2>=2.11.2,<3.0.0",
+    "morecantile>=3.0.2,<3.1",
     "importlib_resources>=1.1.0;python_version<'3.9'",
 ]
 
