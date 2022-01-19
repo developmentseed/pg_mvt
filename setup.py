@@ -11,6 +11,7 @@ inst_reqs = [
     "starlite>=0.5",
     "jinja2>=2.11.2,<3.0.0",
     "morecantile>=3.0.2,<3.1",
+    "starlette-cramjam>=0.1.0,<0.2",
     "importlib_resources>=1.1.0;python_version<'3.9'",
 ]
 
